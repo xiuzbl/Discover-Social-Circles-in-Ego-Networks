@@ -87,5 +87,3 @@ def totalLoss(clusters,chat,N,which):
 #             where +=1
 #         res[i] = sum
 #
-
-
