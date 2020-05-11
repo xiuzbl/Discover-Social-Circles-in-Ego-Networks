@@ -1,7 +1,7 @@
 from util import *
 import random
 import numpy as np
-import thinqpbo as tq
+from thinqpbo_master import thinqpbo as tq
 
 class graphData:
     def __init__(self,nodefile,selffeatfile,clusfile,edgefile,which):
@@ -42,11 +42,6 @@ class graphData:
             line = line.strip()
             line = line.split(" ")
         sf = [int(i) for i in line]
-        # i = 0
-        # for kv in NodeFeatures.items():
-        #     res = diff(sf,kv[1],nNodeFeatures)
-        #     simFeatures[i] = res
-        #     i+=1
         for i in range(nNodes):
             res = diff(sf,NodeFeatures[i],nNodeFeatures)
             simFeatures[i] = res
@@ -204,8 +199,12 @@ class Cluster:
             largestCompleteGraph = 500
             if E > (largestCompleteGraph ** 2):
                 E = largestCompleteGraph ** 2
+
             q = tq.QPBOInt(self.nNodes,E)
+
+            # q.setLabel
             q.add_node(self.nNodes)
+            # q.AddNode(self.nNodes)
             mc00 = {}
             mc11 = {}
             diff_c00_c11 = []
@@ -251,12 +250,13 @@ class Cluster:
                     c10 = c00
                     c11 = mc11[edge]
                     q.add_pairwise_term(edge[0], edge[1], c00, c01, c10, c11)
-            label = {}
+            # label = {}
             for i in range(self.nNodes):
                 if len(self.chat[k]) and max(self.chat[k])==i:
-                    label[i] = 0
+                    q.setlabel(i,0)
+                    # q.setlabel(i,0)
                 else:
-                    label[i] = 1
+                    q.setlabel(i,1)
             # print('Label',label)
             q.merge_parallel_edges()
             q.solve()
@@ -270,12 +270,11 @@ class Cluster:
             res = set()
             for i in range(self.nNodes):
                 newLabel[i] = 0
-                if (i in label.keys() and label[i]==1) :
+                if q.get_label(i)==1:
                     res.add(i)
                     newLabel[i] = 1
                 # elif (i q.get_label(i)<0 or( i not in label.keys()) )and (len(self.chat[k]) and max(self.chat[k])!=i):
-                elif (i not in label.keys() and q.get_label(i)<0
-                      and (len(self.chat[k]) and max(self.chat[k])!=i) ):
+                elif q.get_label(i)<0 and len(self.chat[k]) and max(self.chat[k])!=i :
                     res.add(i)
                     newLabel[i] = 1
                 if len(self.chat[k]) and max(self.chat[k])==i:
@@ -321,7 +320,7 @@ class Cluster:
                 ok= set()
                 if rep==0 or len(self.chat[k])==self.nNodes or len(self.chat[k])==0: # ??
                     for i in range(self.nNodes):
-                        if (random.randint(1,2**16))%2==0:
+                        if (random.randint(1,10))%2==0:
                             ok.add(i)
                     for i in range(self.nEdgeFeatures):
                         self.theta[k*self.nEdgeFeatures+i]=0
@@ -337,15 +336,19 @@ class Cluster:
             for k in range(self.K):
                 for o in range(self.K):
                     x1 = o
-                    x2 = random.randint(1,2**16)%(self.K)
+                    x2 = random.randint(1,20)%(self.K)
                     order[x1] ^= order[x2]
                     order[x2] ^= order[x1]
                     order[x1] ^= order[x2]
             changed = 0
+            print('1',self.chat)
             for i in order:
                 self.chat[i],changed = minimize_graphcuts(i,changed)
+                # print(i,self.chat[i])
+            print('2',self.chat)
             print('loss = %f',totalLoss(self.cluster,self.chat,self.nNodes,self.whichLoss))
             ll_prev = self.loglikelihood(self.theta,self.alpha,self.chat)
+            # print('chat',self.chat)
             if not changed:
                 break
             # Perform gradient ascent
@@ -370,23 +373,3 @@ class Cluster:
                 ll_prev = ll
 
             print("ll = ", ll)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
