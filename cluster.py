@@ -1,7 +1,7 @@
 from util import *
 import random
 import numpy as np
-from thinqpbo_master import thinqpbo as tq
+import thinqpbo as tq
 
 class graphData:
     def __init__(self,nodefile,selffeatfile,clusfile,edgefile,which):
